@@ -87,6 +87,9 @@ void loop() {
         return;
     }
 
+    # Acknowledge the correct handshake.
+    Serial.write(HELLO);
+
     // Wait for instruction.
     char inst = readChar();
 
