@@ -1,0 +1,3 @@
+[submodule "arduino/lib/rc-switch"]
+	path = arduino/lib/rc-switch
+	url = https://github.com/sui77/rc-switch
