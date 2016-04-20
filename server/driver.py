@@ -137,6 +137,7 @@ class SignalDriver(object):
                 if resp == _RADIO_TIMEOUT:
                     raise RadioTimeout(radio_timeout)
                 self._assert_response(_INCOMING_DATA, actual=resp)
+                break
             protocol = self._read_2byte_int()[0]
             delay = self._read_2byte_int()[0]
             size = self._read_2byte_int()[0]
