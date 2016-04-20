@@ -87,7 +87,7 @@ void loop() {
         return;
     }
 
-    # Acknowledge the correct handshake.
+    // Acknowledge the correct handshake.
     Serial.write(HELLO);
 
     // Wait for instruction.
