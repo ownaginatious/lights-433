@@ -1,11 +1,12 @@
 import codecs
 from collections import namedtuple
+import logging
 import serial
 import struct
 import time
 
 _PROTOCOL_HEADER = b'CLS'
-_PROTOCOL_VERSION = '0'
+_PROTOCOL_VERSION = b'0'
 _DEFAULT_BAUD = 9600
 _DEFAULT_TIMEOUT = 10
 
@@ -21,6 +22,7 @@ _HELLO = b'E'
 _GOODBYE = b'F'
 _BAD_HEADER = b'G'
 _WRONG_VERSION = b'H'
+_HEARTBEAT = b'I'
 _UNKNOWN_OP_CODE = b'Z'
 
 _RESPONSE_DEFINITIONS = {
@@ -35,6 +37,8 @@ _RESPONSE_DEFINITIONS = {
 }
 
 Signal = namedtuple('Signal', ['protocol', 'pulse_length', 'message'])
+
+LOG = logging.getLogger(__name__)
 
 
 class BadResponseError(Exception):
@@ -63,10 +67,9 @@ class SignalDriver(object):
         self.reconnect()
 
     def reconnect(self):
-
         if self.conn:
             try:
-                serial.close()
+                self.conn.close()
             except Exception as e:
                 LOG.warn("Exception when terminating connection: %s", str(e))
 
@@ -78,13 +81,14 @@ class SignalDriver(object):
         # serial-triggered reset.
         time.sleep(3)
 
-    def _assert_response(self, expected):
-        actual = self.conn.read()
+    def _assert_response(self, expected, actual=None):
+        if not actual:
+            actual = self.conn.read()
         if actual != expected:
-            raise BadResponseException()
+            raise BadResponseError(actual, expected)
 
     def _read_2byte_int(self):
-        return struct.unpack('<H', s.read(2))
+        return struct.unpack('<H', self.conn.read(2))
 
     def _write_as_2bytes(self, x):
         if isinstance(x, str):
@@ -126,14 +130,16 @@ class SignalDriver(object):
 
         # Begin reading message data.
         for _ in range(message_num):
-            r = self.conn.read()
-            if r == _RADIO_TIMEOUT:
-                raise RadioTimeout(radio_timeout)
-            self._assert_response(_INCOMING_DATA)
-            s = Signal()
-            s.protocol = self._read_2byte_int()[0]
-            s.delay = self._read_2byte_int()[0]
+            while True:
+                resp = self.conn.read()
+                if resp == _HEARTBEAT:
+                    continue
+                if resp == _RADIO_TIMEOUT:
+                    raise RadioTimeout(radio_timeout)
+                self._assert_response(_INCOMING_DATA, actual=resp)
+            protocol = self._read_2byte_int()[0]
+            delay = self._read_2byte_int()[0]
             size = self._read_2byte_int()[0]
-            s.message = self.conn.read(size)[0]
-            yield s
+            message = self.conn.read(size)
+            yield Signal(protocol, delay, message)
         self._assert_response(_GOODBYE)

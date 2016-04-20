@@ -19,6 +19,7 @@ RCSwitch outputLine = RCSwitch();
 #define GOODBYE          'F'
 #define BAD_HEADER       'G'
 #define WRONG_VERSION    'H'
+#define HEARTBEAT        'I'
 #define UNKNOWN_OP_CODE  'Z'
 
 #define RADIO_POLL_RATE  10 // milliseconds
@@ -118,6 +119,9 @@ void loop() {
                     }
                     delay(RADIO_POLL_RATE);
                     timeoutCount -= RADIO_POLL_RATE;
+                    if (timeoutCount % 100 == 0) {
+                        Serial.write(HEARTBEAT);
+                    }
                 }
                 Serial.write(INCOMING_DATA);
 
