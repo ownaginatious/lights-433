@@ -1,2 +1,4 @@
 pyserial
 flask
+clip.py
+RPi.GPIO
