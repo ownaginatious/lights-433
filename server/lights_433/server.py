@@ -78,18 +78,18 @@ class Lights433Server(object):
         for switch_id, conf in switches.items():
 
             self.app.route('/switch/%s/<op>')
-            auth.require(users=conf.users)
+            auth.require(users=conf['users'])
 
             def switch(op):
                 if op.lower() == 'on':
-                    self.driver.send_signal(conf.on_signal,
-                                            conf.pulse_length, 5)
+                    self.driver.send_signal(conf['on_signal'],
+                                            conf['pulse_length'], 5)
                     return make_response(
                             jsonify(message='Switch \"%s\" on!' % switch_id),
                             200)
                 elif op.lower() == 'off':
-                    self.driver.send_signal(conf.off_signal,
-                                            conf.pulse_length, 5)
+                    self.driver.send_signal(conf['off_signal'],
+                                            conf['pulse_length'], 5)
                     return make_response(
                             jsonify(message='Switch \"%s\" off!' % switch_id),
                             200)
