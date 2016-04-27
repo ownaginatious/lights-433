@@ -100,7 +100,4 @@ class Lights433Server(object):
                                404)
 
     def run(self):
-        self.run()
-
-    app = Flask(__name__)
-    auth = BasicRoleAuth()
+        self.app.run()
