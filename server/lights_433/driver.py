@@ -114,7 +114,7 @@ class SignalDriver(object):
                                   timeout=self.timeout)
 
         if self.port_setup:
-            port_setup()
+            self.port_setup()
 
     def _assert_response(self, expected, actual=None):
         """
