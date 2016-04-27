@@ -60,7 +60,7 @@ class Lights433Server(object):
                                                pulse_length=pulse_length,
                                                users=users.split(','))
 
-                elif line.startsWith('user:'):
+                elif line.startswith('user:'):
                     _, user_id, password = line.split(':')
                     if user_id in users:
                         raise UserAlreadyExistsError(user_id)
