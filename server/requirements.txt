@@ -6,10 +6,12 @@
 #
 
 clip.py==0.3.2
+flask-basic-roles==0.1.post4
 flask==0.10.1
-itsdangerous==0.24        # via flask
-Jinja2==2.8               # via flask
-MarkupSafe==0.23          # via jinja2
+itsdangerous==0.24        # via flask, flask-basic-roles
+Jinja2==2.8               # via flask, flask-basic-roles
+markupsafe==0.23          # via flask-basic-roles, jinja2
 pyserial==3.0.1
 RPi.GPIO==0.6.2
-Werkzeug==0.11.9          # via flask
+six==1.10.0               # via flask-basic-roles
+Werkzeug==0.11.4          # via flask, flask-basic-roles

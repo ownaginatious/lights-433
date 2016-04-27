@@ -16,4 +16,9 @@ setup(
     install_requires=[line.strip()
                       for line in open("requirements.txt", "r",
                                        encoding="utf-8").readlines()],
+    entry_points = {
+        "console_scripts": [
+            "lights433 = lights_433.main:main",
+        ],
+    },
 )

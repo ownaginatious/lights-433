@@ -2,3 +2,4 @@ pyserial
 flask
 clip.py
 RPi.GPIO
+flask_basic_roles

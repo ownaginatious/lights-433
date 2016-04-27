@@ -26,7 +26,7 @@ class SwitchAlreadyExistsError(Exception):
 
 class Lights433Server(object):
 
-    def __init__(self, host, port, gpio=None, serial, baud, timeout, spec):
+    def __init__(self, host, port, serial, baud, timeout, spec, gpio=None):
 
         if gpio:
             # It is assumed this is a Raspberry Pi.
