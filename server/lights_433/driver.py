@@ -187,11 +187,10 @@ class SignalDriver(object):
         self._write_as_2bytes(protocol)
         self._write_as_2bytes(pulse_length)
         self._write_as_2bytes(repetitions)
+        if isinstance(message, unicode):
+            message = codecs.decode(message, 'hex'))
         self._write_as_2bytes(len(message))
-        if isinstance(message, str):
-            self.conn.write(message)
-        else:
-            self.conn.write(codecs.decode(message, 'hex'))
+        self.conn.write(message)
         self._assert_response(_GOODBYE)
 
     def read_signals(self, message_num, radio_timeout=10000):
