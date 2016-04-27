@@ -44,9 +44,9 @@ class Lights433Server(object):
 
         self.host = host
         self.port = port
-        self.driver = SignalDriver(serial,
-                                   baud_rate=baud, timeout=timeout,
-                                   port_setup=gpio if gpio else lambda: None)
+        driver = SignalDriver(serial,
+                              baud_rate=baud, timeout=timeout,
+                              port_setup=gpio if gpio else lambda: None)
         users = {}
         switches = {}
         with open(spec, 'r') as f:
@@ -69,7 +69,7 @@ class Lights433Server(object):
                 else:
                     raise UnknownConfigSetting(line.split(':')[0])
 
-        self.app = Flask(__name__, host=host, port=port)
+        self.app = Flask(__name__)
         auth = BasicRoleAuth()
 
         for user_id, password in users.items():
@@ -82,14 +82,14 @@ class Lights433Server(object):
 
             def switch(op):
                 if op.lower() == 'on':
-                    self.driver.send_signal(conf['on_signal'],
-                                            conf['pulse_length'], 5)
+                    driver.send_signal(conf['on_signal'],
+                                       conf['pulse_length'], 5)
                     return make_response(
                             jsonify(message='Switch \"%s\" on!' % switch_id),
                             200)
                 elif op.lower() == 'off':
-                    self.driver.send_signal(conf['off_signal'],
-                                            conf['pulse_length'], 5)
+                    driver.send_signal(conf['off_signal'],
+                                       conf['pulse_length'], 5)
                     return make_response(
                             jsonify(message='Switch \"%s\" off!' % switch_id),
                             200)
@@ -100,4 +100,4 @@ class Lights433Server(object):
                                404)
 
     def run(self):
-        self.app.run()
+        self.app.run(host=host, port=port)
