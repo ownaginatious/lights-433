@@ -58,7 +58,7 @@ class Lights433Server(object):
                         raise SwitchAlreadyExistsError(switch_id)
                     switches[switch_id] = dict(on_signal=unicode(on_signal),
                                                off_signal=unicode(off_signal),
-                                               pulse_length=pulse_length,
+                                               pulse_length=int(pulse_length),
                                                users=allowed.split(','))
 
                 elif line.startswith('user:'):
