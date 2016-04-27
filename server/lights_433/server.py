@@ -72,7 +72,7 @@ class Lights433Server(object):
         self.app = Flask(__name__)
         auth = BasicRoleAuth()
 
-        for user_id, password in users:
+        for user_id, password in users.items():
             auth.add_user(user=user_id, password=password)
 
         for switch_id, conf in switches.items():
