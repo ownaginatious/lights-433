@@ -83,7 +83,7 @@ class Lights433Server(object):
             @self.app.route('/switch/%s/<op>' % switch_id)
             @auth.require(users=conf['users'])
             def switch(op):
-                with self.serial_lock():
+                with self.serial_lock:
                     if op.lower() == 'on':
                         try:
                             self.driver.send_signal(conf['on_signal'],
