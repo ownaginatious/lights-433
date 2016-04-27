@@ -53,15 +53,18 @@ class Lights433Server(object):
                 if line.startswith('switch:'):
                     _, switch_id, on_signal, off_signal, pulse_length, \
                         users = line.split(':')
+                    if switch_id in switches:
+                        raise SwitchAlreadyExistsError(switch_id)
                     switches[switch_id] = dict(on_signal=unicode(on_signal),
                                                off_signal=unicode(off_signal),
                                                pulse_length=pulse_length,
                                                users=users.split(','))
-                    raise SwitchAlreadyExistsError(switch_id)
+
                 elif line.startsWith('user:'):
                     _, user_id, password = line.split(':')
+                    if user_id in users:
+                        raise UserAlreadyExistsError(user_id)
                     users[user_id] = password
-                    raise UserAlreadyExistsError(user_id)
                 else:
                     raise UnknownConfigSetting(line.split(':')[0])
 
