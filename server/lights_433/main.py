@@ -10,7 +10,7 @@ app = clip.App()
 
 @app.main(description='An HTTP server daemon for controlling 433MHz '
                       'light switches')
-@clip.opt('-h', '--host', default='127.0.0.1', type=str,
+@clip.opt('-s', '--host', default='127.0.0.1', type=str,
           help='The interface to listen and permit connections on')
 @clip.opt('-p', '--port', default=8080, type=int,
           help='The port to run the server on')
