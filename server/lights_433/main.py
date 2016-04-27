@@ -25,7 +25,7 @@ app = clip.App()
 @clip.arg('spec', required=True, help='Path to the spec file for users '
                                       'and signals')
 def lights433(host, port, gpio, serial, baud, timeout, spec):
-    server = Lights433Server(host, port, gpio, serial, baud, timeout, spec)
+    server = Lights433Server(host, port, serial, baud, timeout, spec, gpio)
     server.start()
 
 
