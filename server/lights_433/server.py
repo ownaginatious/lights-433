@@ -44,7 +44,7 @@ class Lights433Server(object):
 
             gpio = _reset_port
 
-        self.serial_lock = threading.Lock()
+        self.serial_lock = Lock()
         self.host = host
         self.port = port
         self.driver = SignalDriver(serial,
