@@ -26,7 +26,7 @@ app = clip.App()
                                       'and signals')
 def lights433(host, port, gpio, serial, baud, timeout, spec):
     server = Lights433Server(host, port, serial, baud, timeout, spec, gpio)
-    server.start()
+    server.run()
 
 
 def main():
