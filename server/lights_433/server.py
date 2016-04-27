@@ -100,4 +100,4 @@ class Lights433Server(object):
                                404)
 
     def run(self):
-        self.app.run(host=host, port=port)
+        self.app.run(host=self.host, port=self.port)
