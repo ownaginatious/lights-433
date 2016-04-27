@@ -112,6 +112,7 @@ class SignalDriver(object):
         self.conn = serial.Serial(self.serial_device_file,
                                   self.baud_rate,
                                   timeout=self.timeout)
+        self.conn.flush()
 
         if self.port_setup:
             self.port_setup()

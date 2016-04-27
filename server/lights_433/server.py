@@ -3,6 +3,7 @@
 
 from __future__ import unicode_literals
 
+from threading import Lock
 from flask import Flask, jsonify, make_response
 from flask_basic_roles import BasicRoleAuth
 import RPi.GPIO as GPIO
@@ -37,16 +38,18 @@ class Lights433Server(object):
 
             def _reset_port():
                 GPIO.output(_RESET_PORT, GPIO.LOW)
-                time.sleep(2)
+                time.sleep(1)
                 GPIO.output(_RESET_PORT, GPIO.HIGH)
+                time.sleep(2)
 
             gpio = _reset_port
 
+        self.serial_lock = threading.Lock()
         self.host = host
         self.port = port
-        driver = SignalDriver(serial,
-                              baud_rate=baud, timeout=timeout,
-                              port_setup=gpio if gpio else lambda: None)
+        self.driver = SignalDriver(serial,
+                                   baud_rate=baud, timeout=timeout,
+                                   port_setup=gpio if gpio else lambda: None)
         users = {}
         switches = {}
         with open(spec, 'r') as f:
@@ -80,22 +83,31 @@ class Lights433Server(object):
             @self.app.route('/switch/%s/<op>' % switch_id)
             @auth.require(users=conf['users'])
             def switch(op):
-                if op.lower() == 'on':
-                    driver.send_signal(conf['on_signal'],
-                                       conf['pulse_length'], 5)
-                    return make_response(
-                            jsonify(message='Switch \"%s\" on!' % switch_id),
-                            200)
-                elif op.lower() == 'off':
-                    driver.send_signal(conf['off_signal'],
-                                       conf['pulse_length'], 5)
-                    return make_response(
-                            jsonify(message='Switch \"%s\" off!' % switch_id),
-                            200)
-                else:
-                    return make_response(
-                               jsonify(error='no such switch \"%s\" or '
-                                             'method "%s"' % (switch_id, op)),
+                with self.serial_lock():
+                    if op.lower() == 'on':
+                        try:
+                            self.driver.send_signal(conf['on_signal'],
+                                                    conf['pulse_length'], 5)
+                        except Exception as e:
+                            self.driver.reconnect() # Reboot the transmitter
+                            raise e
+                        return make_response(jsonify(
+                               message='%s switched on!' % switch_id),
+                               200)
+                    elif op.lower() == 'off':
+                        try:
+                            self.driver.send_signal(conf['off_signal'],
+                                                    conf['pulse_length'], 5)
+                        except Exception as e:
+                            self.driver.reconnect() # Reboot the transmitter
+                            raise e
+                        return make_response(jsonify(
+                               message='%s switched off!' % switch_id),
+                               200)
+                    else:
+                        return make_response(jsonify(
+                               error='no such switch \"%s\" or method "%s"'
+                                      % (switch_id, op)),
                                404)
 
     def run(self):
