@@ -69,7 +69,7 @@ class Lights433Server(object):
                 else:
                     raise UnknownConfigSetting(line.split(':')[0])
 
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, host=host, port=port)
         auth = BasicRoleAuth()
 
         for user_id, password in users.items():
