@@ -11,7 +11,6 @@ from .driver import SignalDriver
 
 _RESET_PORT = 3
 
-3\x15A
 class UnknownConfigSettingError(Exception):
     pass
 
@@ -54,8 +53,8 @@ class Lights433Server(object):
                 if line.startswith('switch:'):
                     _, switch_id, on_signal, off_signal, pulse_length, \
                         users = line.split(':')
-                    switches[switch_id] = dict(on_signal=on_signal,
-                                               off_signal=off_signal,
+                    switches[switch_id] = dict(on_signal=unicode(on_signal),
+                                               off_signal=unicode(off_signal),
                                                pulse_length=pulse_length,
                                                users=users.split(','))
                     raise SwitchAlreadyExistsError(switch_id)

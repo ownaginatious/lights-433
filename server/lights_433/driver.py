@@ -188,7 +188,7 @@ class SignalDriver(object):
         self._write_as_2bytes(pulse_length)
         self._write_as_2bytes(repetitions)
         self._write_as_2bytes(len(message))
-        if isinstance(message, bytes):
+        if isinstance(message, str):
             self.conn.write(message)
         else:
             self.conn.write(codecs.decode(message, 'hex'))
@@ -229,5 +229,5 @@ class SignalDriver(object):
             delay = self._read_2byte_int()[0]
             size = self._read_2byte_int()[0]
             message = self.conn.read(size)
-            yield Signal(protocol, delay, message)
+            yield Signal(protocol, delay, codecs.encode(message, 'hex'))
         self._assert_response(_GOODBYE)
