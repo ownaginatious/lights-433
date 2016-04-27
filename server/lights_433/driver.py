@@ -188,7 +188,7 @@ class SignalDriver(object):
         self._write_as_2bytes(pulse_length)
         self._write_as_2bytes(repetitions)
         if isinstance(message, unicode):
-            message = codecs.decode(message, 'hex'))
+            message = codecs.decode(message, 'hex')
         self._write_as_2bytes(len(message))
         self.conn.write(message)
         self._assert_response(_GOODBYE)
