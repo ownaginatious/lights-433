@@ -53,7 +53,7 @@ class Lights433Server(object):
             for line in f:
                 if line.startswith('switch:'):
                     _, switch_id, on_signal, off_signal, pulse_length, \
-                        allowed = line.split(':')
+                        allowed = line.strip().split(':')
                     if switch_id in switches:
                         raise SwitchAlreadyExistsError(switch_id)
                     switches[switch_id] = dict(on_signal=unicode(on_signal),
@@ -62,7 +62,7 @@ class Lights433Server(object):
                                                users=allowed.split(','))
 
                 elif line.startswith('user:'):
-                    _, user_id, password = line.split(':')
+                    _, user_id, password = line.strip().split(':')
                     if user_id in users:
                         raise UserAlreadyExistsError(user_id)
                     users[user_id] = password
