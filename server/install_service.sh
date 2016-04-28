@@ -61,6 +61,7 @@ python2 ./setup.py install
 
 tmp_file="$(mktemp -t ttg.XXXXXXXXXX)"
 
+echo " >> Generating systemd unit file..."
 # Create the systemd unit file
 {
 	echo "[Unit]"
@@ -69,7 +70,7 @@ tmp_file="$(mktemp -t ttg.XXXXXXXXXX)"
 
 	echo "[Service]"
 	echo "WorkingDirectory=${install_dir}"
-	echo "ExecStart=${install_dir}/venv/bin/python2 lights-433
+	echo "ExecStart=${install_dir}/venv/bin/python2 lights-433 \
                   /dev/ttyAMA0 ${config_file} --host 0.0.0.0 --port 5000"
 	echo "Type=simple"
 	echo "Restart=always"
@@ -80,7 +81,7 @@ tmp_file="$(mktemp -t ttg.XXXXXXXXXX)"
 
 } >> "${tmp_file}"
 
-
+echo " >> Installing systemd unit file..."
 cp "${tmp_file}" "/usr/lib/systemd/system/lights-433.service"
 systemctl enable "lights-433"
 systemctl start "lights-433"
