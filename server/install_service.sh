@@ -50,7 +50,9 @@ if [ -z "$(which virtualenv 2> /dev/null)" ]; then
 	exit 1
 fi
 virtualenv "${install_dir}/venv" --python "$(which python2)"
+set +u
 . "${install_dir}/venv/bin/activate"
+set -u
 
 # Change to the script's directory.
 cd "$(dirname "$0")"
