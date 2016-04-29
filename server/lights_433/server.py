@@ -107,8 +107,8 @@ class Lights433Server(object):
                            404)
 
         for switch_id, conf in switches.items():
-            switch_func = (lambda x, y, z:
-                           lambda op: switch(x, y, z))(op, switch_id, conf)
+            switch_func = (lambda x, y:
+                           lambda op: switch(op, x, y))(switch_id, conf)
             switch_func.__name__ = str(switch_id)
 
             self.app.route('/switch/%s/<op>' % switch_id)(
