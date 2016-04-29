@@ -4,7 +4,7 @@
 #                 machine (preferably a Raspberry Pi) running the systemd
 #                 init system.
 #author          :Dillon Dixon
-#date            :20160117
+#date            :20160428
 #version         :0.1
 #===============================================================================
 
@@ -59,7 +59,7 @@ cd "$(dirname "$0")"
 echo " >> Installing lights-433..."
 python2 ./setup.py install
 
-tmp_file="$(mktemp -t ttg.XXXXXXXXXX)"
+tmp_file="$(mktemp -t lights-433.XXXXXXXXXX)"
 
 echo " >> Generating systemd unit file..."
 # Create the systemd unit file
