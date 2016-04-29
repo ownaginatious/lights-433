@@ -78,37 +78,44 @@ class Lights433Server(object):
         for user_id, password in users.items():
             auth.add_user(user=user_id, password=password)
 
+        def switch(op, switch_id, conf):
+            with self.serial_lock:
+                if op.lower() == 'on':
+                    try:
+                        self.driver.send_signal(conf['on_signal'],
+                                                conf['pulse_length'], 5)
+                    except Exception as e:
+                        self.driver.reconnect() # Reboot the transmitter
+                        raise e
+                    return make_response(jsonify(
+                           message='%s switched on!' % switch_id),
+                           200)
+                elif op.lower() == 'off':
+                    try:
+                        self.driver.send_signal(conf['off_signal'],
+                                                conf['pulse_length'], 5)
+                    except Exception as e:
+                        self.driver.reconnect() # Reboot the transmitter
+                        raise e
+                    return make_response(jsonify(
+                           message='%s switched off!' % switch_id),
+                           200)
+                else:
+                    return make_response(jsonify(
+                           error='no such switch \"%s\" or method "%s"'
+                                  % (switch_id, op)),
+                           404)
+
         for switch_id, conf in switches.items():
 
-            @self.app.route('/switch/%s/<op>' % switch_id)
-            @auth.require(users=conf['users'])
-            def switch(op):
-                with self.serial_lock:
-                    if op.lower() == 'on':
-                        try:
-                            self.driver.send_signal(conf['on_signal'],
-                                                    conf['pulse_length'], 5)
-                        except Exception as e:
-                            self.driver.reconnect() # Reboot the transmitter
-                            raise e
-                        return make_response(jsonify(
-                               message='%s switched on!' % switch_id),
-                               200)
-                    elif op.lower() == 'off':
-                        try:
-                            self.driver.send_signal(conf['off_signal'],
-                                                    conf['pulse_length'], 5)
-                        except Exception as e:
-                            self.driver.reconnect() # Reboot the transmitter
-                            raise e
-                        return make_response(jsonify(
-                               message='%s switched off!' % switch_id),
-                               200)
-                    else:
-                        return make_response(jsonify(
-                               error='no such switch \"%s\" or method "%s"'
-                                      % (switch_id, op)),
-                               404)
+            switch_func = lambda op: switch(op, switch_id, conf)
+            switch_func.__name__ = switch_id
+
+            self.app.route('/switch/%s/<op>' % switch_id)(
+                auth.require(users=conf['users'])(
+                    switch_func
+                )
+            )
 
     def run(self):
         self.app.run(host=self.host, port=self.port)
