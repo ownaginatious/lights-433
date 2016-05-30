@@ -103,19 +103,17 @@ class SignalDriver(object):
         """
         Reconnects to the serial interface and resets the device (optional)
         """
+        if self.port_setup:
+            self.port_setup()
         if self.conn:
             try:
                 self.conn.close()
             except Exception as e:
                 LOG.warn("Exception when terminating connection: %s", str(e))
-
         self.conn = serial.Serial(self.serial_device_file,
                                   self.baud_rate,
                                   timeout=self.timeout)
         self.conn.flush()
-
-        if self.port_setup:
-            self.port_setup()
 
     def _assert_response(self, expected, actual=None):
         """
