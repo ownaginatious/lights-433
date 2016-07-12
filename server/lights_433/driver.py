@@ -93,8 +93,7 @@ class SignalDriver(object):
         self.timeout = timeout
         self.conn = None
         self.port_setup = port_setup
-        if self.port_setup is not None and \
-           not hasattr(self.port_setup, '__call__'):
+        if self.port_setup and not hasattr(self.port_setup, '__call__'):
             raise Exception('Supplied argument for port_setup '
                             'is not a function')
         self.reconnect()

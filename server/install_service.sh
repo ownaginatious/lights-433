@@ -40,9 +40,17 @@ install_dir="/opt/lights-433"
 echo " >> Deleting old installations (${install_dir})... "
 rm -rf "${install_dir}"
 
-config_file="/etc/lights-433.conf"
+config_dir="/etc/lights-433"
+echo " >> Creating config directory (${config_dir})..."
+mkdir -p "${config_dir}"
+
+config_file="${config_dir}/switches.conf"
 echo " >> Creating config file (${config_file})..."
 touch "${config_file}"
+
+sentry_config_file="${config_dir}/sentry.conf"
+echo " >> Creating sentry config file (${sentry_config_file})..."
+touch "${sentry_config_file}"
 
 echo " >> Creating virtualenv... (${install_dir}/venv)"
 if [ -z "$(which virtualenv 2> /dev/null)" ]; then
@@ -70,7 +78,7 @@ echo " >> Generating systemd unit file..."
 
 	echo "[Service]"
 	echo "WorkingDirectory=${install_dir}"
-	echo "ExecStart=${install_dir}/venv/bin/lights433 /dev/ttyAMA0 ${config_file} --host 0.0.0.0 --port 5000"
+	echo "ExecStart=${install_dir}/venv/bin/lights433 /dev/ttyAMA0 --host 0.0.0.0 --port 5000 --resettable"
 	echo "Type=simple"
 	echo "Restart=always"
 	echo "RestartSec=10"
