@@ -35,8 +35,8 @@ class Lights433Server(object):
     def __init__(self, host, port, serial, baud, timeout, switch_conf,
                  resettable=False, sentry=None):
 
-        signal.signals(signal.SIGINT, self.clean_up)
-        signal.signals(signal.SIGTERM, self.clean_up)
+        signal.signal(signal.SIGINT, self.clean_up)
+        signal.signal(signal.SIGTERM, self.clean_up)
 
         self.serial_lock = Lock()
         self.host = host
