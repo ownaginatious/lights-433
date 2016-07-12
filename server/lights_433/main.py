@@ -28,11 +28,11 @@ log = logging.getLogger(__name__)
           help='The port to run the server on')
 @clip.opt('--baud', required=False, default=9600, type=int,
           help='Baud rate of the serial interface')
-@clip.opt('--timeout', required=False, default=1, type=int,
+@clip.opt('--timeout', default=1, type=int,
           help='The timeout of the serial interface')
-@clip.arg('--switches', required=True, default=DEFAULT_SWITCH_CONF, type=str,
+@clip.arg('--switches', default=DEFAULT_SWITCH_CONF, type=str,
           help='Path to the config file for users and signals')
-@clip.opt('--sentry', required=False, default=DEFAULT_SENTRY_CONF, type=str,
+@clip.opt('--sentry', default=DEFAULT_SENTRY_CONF, type=str,
           help='Path to the config file containing the Sentry capture URL')
 @clip.flag('--resettable',
            help='Enables device resetting over pin 3 (assumed RPi)')
