@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
           help='Baud rate of the serial interface')
 @clip.opt('--timeout', default=1, type=int,
           help='The timeout of the serial interface')
-@clip.arg('--switches', default=DEFAULT_SWITCH_CONF, type=str,
+@clip.opt('--switches', default=DEFAULT_SWITCH_CONF, type=str,
           help='Path to the config file for users and signals')
 @clip.opt('--sentry', default=DEFAULT_SENTRY_CONF, type=str,
           help='Path to the config file containing the Sentry capture URL')
