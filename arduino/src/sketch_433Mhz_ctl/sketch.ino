@@ -32,11 +32,6 @@ void setup() {
     outputLine.setRepeatTransmit(1);
 }
 
-char readChar(){
-    while (!Serial.available());
-    return (char) Serial.read();
-}
-
 unsigned int readShort(){
     unsigned int val = 0x00;
     byte buffer[2]; 
@@ -57,6 +52,10 @@ unsigned long readMessage(int byteLength){
         val |= buffer[byteLength - 1 - i];
     }
     return val;
+}
+
+char readChar(){
+    return (char) readMessage(1);
 }
 
 void writeShort(unsigned int val){
