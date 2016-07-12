@@ -50,9 +50,16 @@ def lights433(host, port, resettable, serial, baud, timeout, switches, sentry):
         log.info("Sentry client configured!")
 
     log.info("Loading switch configurations from [%s]" % DEFAULT_SWITCH_CONF)
-    server = Lights433Server(host, port, serial, baud, timeout, switches,
-                             resettable, locals().get('sentry_client', None))
-    server.run()
+
+    try:
+        server = Lights433Server(host, port, serial, baud, timeout,
+                                 switches, resettable,
+                                 locals().get('sentry_client', None))
+        server.run()
+    except:
+        if sentry_client:
+            sentry_client.captureException()
+        raise
 
 
 def main():

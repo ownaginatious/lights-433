@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 
-from functools import wraps, partial
+from functools import partial
 import logging
 import signal
 from threading import Lock
@@ -35,19 +35,23 @@ class Lights433Server(object):
     def __init__(self, host, port, serial, baud, timeout, switch_conf,
                  resettable=False, sentry=None):
 
-        signal.signal(signal.SIGINT, self.clean_up)
-        signal.signal(signal.SIGTERM, self.clean_up)
-
         self.serial_lock = Lock()
         self.host = host
         self.port = port
-        self.sentry = sentry
         self.resettable = resettable
 
-        self.driver = self.failure_handle(
-            SignalDriver(serial,
-                         baud_rate=baud, timeout=timeout,
-                         port_setup=self._setup_outputs()))
+        signal.signal(signal.SIGINT, self.clean_up)
+        signal.signal(signal.SIGTERM, self.clean_up)
+
+        try:
+            self._setup_outputs()
+        except:
+            self.clean_up()
+            raise
+
+        self.driver = SignalDriver(serial,
+                                   baud_rate=baud, timeout=timeout,
+                                   port_setup=self._setup_outputs())
         users = {}
         switches = {}
         with open(switch_conf, 'r') as f:
@@ -74,7 +78,7 @@ class Lights433Server(object):
         self.app = Flask(__name__)
         auth = BasicRoleAuth()
         self._setup_users(users, auth)
-        self._setup_switches(switches, auth)
+        self._setup_switches(switches, auth, sentry)
 
     def _setup_outputs(self):
 
@@ -100,25 +104,33 @@ class Lights433Server(object):
         for user_id, password in users.items():
             auth.add_user(user=user_id, password=password)
 
-    def _setup_switches(self, switches, auth):
-
-        @self.failure_handle()
+    def _setup_switches(self, switches, auth, sentry):
         def switch(op, switch_id, conf):
-            with self.serial_lock:
-                op = op.lower()
-                if op not in ('on', 'off'):
-                    return make_response(jsonify(
-                               error='no such switch \"%s\" or method "%s"'
-                                     % (switch_id, op)), 404)
-                f = partial(self.driver.send_signal,
-                            conf['%s_signal' % op], conf['pulse_length'], 5)
-                try:
-                    f()
-                except:
-                    self.driver.reconnect()  # Reboot the transmitter
-                    f()
-                return make_response(jsonify(
-                           message='%s switched %s!' % (switch_id, op)), 200)
+            try:
+                with self.serial_lock:
+                    op = op.lower()
+                    if op not in ('on', 'off'):
+                        return make_response(
+                            jsonify(error='no such switch \"%s\" or '
+                                          'method "%s"' % (switch_id, op)),
+                            404)
+                    f = partial(self.driver.send_signal,
+                                conf['%s_signal' % op],
+                                conf['pulse_length'], 5)
+                    try:
+                        f()
+                    except:
+                        self.driver.reconnect()  # Reboot the transmitter
+                        f()
+                    return make_response(
+                        jsonify(message='%s switched %s!' % (switch_id, op)),
+                        200)
+            except:
+                if sentry:
+                    sentry.captureException()
+                self.clean_up()
+                raise
+
         for switch_id, conf in switches.items():
             switch_func = (lambda x, y:
                            lambda op: switch(op, x, y))(switch_id, conf)
@@ -127,17 +139,6 @@ class Lights433Server(object):
             self.app.route('/switch/%s/<op>' % switch_id)(
                 auth.require(users=conf['users'])(switch_func)
             )
-
-    def failure_handle(self, f):
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except:
-                if self.sentry:
-                    self.sentry.captureException()
-                self.clean_up()
-                raise
 
     def clean_up(self):
         if self.resettable:
