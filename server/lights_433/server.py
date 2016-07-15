@@ -140,7 +140,7 @@ class Lights433Server(object):
                 auth.require(users=conf['users'])(switch_func)
             )
 
-    def clean_up(self, **kwargs):
+    def clean_up(self, *args):
         if self.resettable:
             import RPi.GPIO as GPIO
             GPIO.cleanup(pin=_RESET_PORT)
