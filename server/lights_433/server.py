@@ -132,7 +132,8 @@ class Lights433Server(object):
                 raise
 
         for switch_id, conf in switches.items():
-            switch_func = partial(switch, switch_id=switch_id, conf=conf)
+            switch_func = (lambda x, y:
+                           lambda op: switch(op, x, y))(switch_id, conf)
             switch_func.__name__ = str(switch_id)
 
             self.app.route('/switch/%s/<op>' % switch_id)(
