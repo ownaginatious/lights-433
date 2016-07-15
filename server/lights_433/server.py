@@ -15,7 +15,7 @@ from .driver import SignalDriver
 
 log = logging.getLogger(__name__)
 
-_RESET_PORT = 3
+_RESET_PORT = 4
 
 
 class UnknownConfigSettingError(Exception):
