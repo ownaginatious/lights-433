@@ -17,8 +17,9 @@ DEFAULT_SENTRY_CONF = "/etc/lights-433/sentry.conf"
 
 log = logging.getLogger(__name__)
 
-# Attach sentry error logging to the console.
-logging.getLogger("sentry.errors").addHandler(logging.StreamHandler())
+# Attach loggers to the console.
+for l in (__name__, 'sentry.errors'):
+    logging.getLogger(l).addHandler(logging.StreamHandler())
 
 
 @app.main(description='An HTTP server daemon for controlling 433MHz '
@@ -47,7 +48,7 @@ def lights433(host, port, resettable, serial, baud, timeout, switches, sentry):
             log.warn("No sentry URL specified in [%s]" % DEFAULT_SENTRY_CONF)
         else:
             sentry_client = Client(url)
-        log.info("Sentry client configured!")
+            log.info("Sentry client configured!")
 
     log.info("Loading switch configurations from [%s]" % DEFAULT_SWITCH_CONF)
 

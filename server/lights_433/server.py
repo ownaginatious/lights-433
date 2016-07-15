@@ -132,15 +132,14 @@ class Lights433Server(object):
                 raise
 
         for switch_id, conf in switches.items():
-            switch_func = (lambda x, y:
-                           lambda op: switch(op, x, y))(switch_id, conf)
+            switch_func = partial(switch, switch_id=switch_id, conf=conf)
             switch_func.__name__ = str(switch_id)
 
             self.app.route('/switch/%s/<op>' % switch_id)(
                 auth.require(users=conf['users'])(switch_func)
             )
 
-    def clean_up(self):
+    def clean_up(self, **kwargs):
         if self.resettable:
             import RPi.GPIO as GPIO
             GPIO.cleanup(pin=_RESET_PORT)

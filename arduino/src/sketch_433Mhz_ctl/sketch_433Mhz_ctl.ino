@@ -27,9 +27,20 @@ RCSwitch outputLine = RCSwitch();
 void setup() {
     Serial.begin(9600);
     Serial.setTimeout(1000);
-    inputLine.enableReceive(0);
+    inputLine.enableReceive(0); // INT0 (pin 2)
     outputLine.enableTransmit(4);
     outputLine.setRepeatTransmit(1);
+
+    // Indicator LED
+    pinMode(9, OUTPUT);
+    
+    // Play the start-up indicator sequence
+    for (int i = 0; i < 3; i++) {
+        digitalWrite(9, HIGH);
+        delay(200);
+        digitalWrite(9, LOW);
+        delay(200);
+    }
 }
 
 unsigned int readShort(){
