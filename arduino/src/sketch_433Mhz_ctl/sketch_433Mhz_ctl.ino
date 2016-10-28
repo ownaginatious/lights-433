@@ -33,7 +33,7 @@ void setup() {
 
     // Indicator LED
     pinMode(9, OUTPUT);
-    
+
     // Play the start-up indicator sequence
     for (int i = 0; i < 3; i++) {
         digitalWrite(9, HIGH);
@@ -45,7 +45,7 @@ void setup() {
 
 unsigned int readShort(){
     unsigned int val = 0x00;
-    byte buffer[2]; 
+    byte buffer[2];
     Serial.readBytes(buffer, 2);
     val = buffer[1];
     val <<= 8;
@@ -75,12 +75,12 @@ void writeShort(unsigned int val){
     Serial.write(val & 0xFF);
 }
 
-void loop() { 
-    
+void loop() {
+
     if (Serial.available() == 0) {
         return;
     }
-    
+
     // Get the protocol indicator signal
     char receivedHeader[4];
     receivedHeader[3] = '\0';
@@ -108,18 +108,18 @@ void loop() {
     int messageNum, radioTimeout, timeoutCount;
     unsigned int repetitions, messageLength;
     unsigned long message;
-    
+
     switch (inst) {
         case READ_433:
-        
+
             Serial.write(AWAITING_DATA);
 
             messageNum = readShort();
             radioTimeout = readShort(); // milliseconds
 
             for (int i = 0; i < messageNum; i++){
-                
-                timeoutCount = radioTimeout; 
+
+                timeoutCount = radioTimeout;
 
                 // Wait for the radio to pick something up.
                 while (!inputLine.available()) {
@@ -150,7 +150,7 @@ void loop() {
                 }
                 inputLine.resetAvailable();
             }
-            
+
             break;
 
         case WRITE_433:
@@ -166,7 +166,7 @@ void loop() {
             messageLength = readShort();
             message = readMessage(messageLength);
             outputLine.send(message, messageLength * 8);
-            
+
             break;
 
         default:

@@ -4,15 +4,31 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+aniso8601==1.2.0          # via flask-ask
+blinker==1.4
+cffi==1.8.3               # via cryptography
 clip.py==0.3.2
 contextlib2==0.5.3        # via raven
+cryptography==1.5.2       # via pyopenssl
+flask-ask==0.7.8
 flask-basic-roles==0.1.post4
 flask==0.10.1
+idna==2.1                 # via cryptography
 itsdangerous==0.24        # via flask, flask-basic-roles
 Jinja2==2.8               # via flask, flask-basic-roles
 markupsafe==0.23          # via flask-basic-roles, jinja2
+pyasn1==0.1.9             # via cryptography
+pycparser==2.16           # via cffi
+pyOpenSSL==16.2.0         # via flask-ask
 pyserial==3.0.1
+python-dateutil==2.5.3    # via aniso8601
+python-Levenshtein==0.12.0
+PyYAML==3.12              # via flask-ask
 raven==5.22.0
 RPi.GPIO==0.6.2
-six==1.10.0               # via flask-basic-roles
+six==1.10.0               # via cryptography, flask-ask, flask-basic-roles, pyopenssl, python-dateutil
 Werkzeug==0.11.4          # via flask, flask-basic-roles
+
+# The following packages are commented out because they are
+# considered to be unsafe in a requirements file:
+# setuptools                # via cryptography, python-levenshtein

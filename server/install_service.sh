@@ -17,18 +17,18 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 if [[ "$(uname)" != "Linux" ]]; then
-	echo "This installation script is only designed for Linux machines."
-	exit 1
+    echo "This installation script is only designed for Linux machines."
+    exit 1
 fi
 
 if [ -z "$(which python2 2> /dev/null)" ]; then
-	echo "No Python 2 installation found. Ensure Python 2 is installed (python2)."
-	exit 1
+    echo "No Python 2 installation found. Ensure Python 2 is installed (python2)."
+    exit 1
 fi
 
 if [ -z "$(which systemctl 2> /dev/null)" ]; then
-	echo "This script only works with systems running systemd."
-	exit 1
+    echo "This script only works with systems running systemd."
+    exit 1
 fi
 
 echo " >> Stopping any running lights-433 services..."
@@ -37,8 +37,10 @@ systemctl disable "lights-433" &> /dev/null || true
 systemctl stop "lights-433" &> /dev/null || true
 
 install_dir="/opt/lights-433"
-echo " >> Deleting old installations (${install_dir})... "
-rm -rf "${install_dir}"
+if [[ "${1:-}" == "purge" ]]; then
+    echo " >> Deleting old installations (${install_dir})... "
+    rm -rf "${install_dir}"
+fi
 
 config_dir="/etc/lights-433"
 echo " >> Creating config directory (${config_dir})..."
@@ -54,37 +56,42 @@ touch "${sentry_config_file}"
 
 echo " >> Creating virtualenv... (${install_dir}/venv)"
 if [ -z "$(which virtualenv 2> /dev/null)" ]; then
-	echo "Virtualenv is missing! Please install from pip or package manager."
-	exit 1
+    echo "Virtualenv is missing! Please install from pip or package manager."
+    exit 1
 fi
-virtualenv "${install_dir}/venv" --python "$(which python2)"
+
+if [[ ! -d "${install_dir}/venv" ]]; then
+    virtualenv "${install_dir}/venv" --python "$(which python2)"
+fi
 set +u
 . "${install_dir}/venv/bin/activate"
 set -u
 
 # Change to the script's directory.
 cd "$(dirname "$0")"
+echo " >> Uninstalling older versions of lights-433..."
+pip uninstall --yes lights-433 || true
 echo " >> Installing lights-433..."
-python2 ./setup.py install
+python2 "./setup.py" install
 
 tmp_file="$(mktemp -t lights-433.XXXXXXXXXX)"
 
 echo " >> Generating systemd unit file..."
 # Create the systemd unit file
 {
-	echo "[Unit]"
-	echo "Description=Lights 433MHz Control Server"
-	echo "After=network.target"
+    echo "[Unit]"
+    echo "Description=Lights 433MHz Control Server"
+    echo "After=network.target"
 
-	echo "[Service]"
-	echo "WorkingDirectory=${install_dir}"
-	echo "ExecStart=${install_dir}/venv/bin/lights433 /dev/ttyAMA0 --host 0.0.0.0 --port 5000 --resettable"
-	echo "Type=simple"
-	echo "Restart=always"
-	echo "RestartSec=10"
+    echo "[Service]"
+    echo "WorkingDirectory=${install_dir}"
+    echo "ExecStart=${install_dir}/venv/bin/lights433 /dev/ttyAMA0 --host 0.0.0.0 --port 5000 --resettable"
+    echo "Type=simple"
+    echo "Restart=always"
+    echo "RestartSec=10"
 
-	echo "[Install]"
-	echo "WantedBy=multi-user.target"
+    echo "[Install]"
+    echo "WantedBy=multi-user.target"
 
 } >> "${tmp_file}"
 

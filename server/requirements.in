@@ -1,6 +1,9 @@
-pyserial
-flask
+blinker
 clip.py
-raven
-RPi.GPIO
+flask
 flask_basic_roles
+flask-ask
+python-Levenshtein
+pyserial
+raven[flask]
+RPi.GPIO

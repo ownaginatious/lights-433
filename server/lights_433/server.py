@@ -7,9 +7,12 @@ from functools import partial
 import logging
 import signal
 from threading import Lock
+import time
+
 from flask import Flask, jsonify, make_response
 from flask_basic_roles import BasicRoleAuth
-import time
+
+from .alexa import AlexaServer
 from .driver import SignalDriver
 
 
@@ -33,11 +36,12 @@ class SwitchAlreadyExistsError(Exception):
 class Lights433Server(object):
 
     def __init__(self, host, port, serial, baud, timeout, switch_conf,
-                 resettable=False, sentry=None):
+                 resettable=False):
 
         self.serial_lock = Lock()
         self.host = host
         self.port = port
+        self.switches = {}
         self.resettable = resettable
 
         signal.signal(signal.SIGINT, self.clean_up)
@@ -78,7 +82,8 @@ class Lights433Server(object):
         self.app = Flask(__name__)
         auth = BasicRoleAuth()
         self._setup_users(users, auth)
-        self._setup_switches(switches, auth, sentry)
+        self._setup_switches(switches, auth)
+        self.alexa = AlexaServer(self)
 
     def _setup_outputs(self):
 
@@ -104,7 +109,7 @@ class Lights433Server(object):
         for user_id, password in users.items():
             auth.add_user(user=user_id, password=password)
 
-    def _setup_switches(self, switches, auth, sentry):
+    def _setup_switches(self, switches, auth):
         def switch(op, switch_id, conf):
             try:
                 with self.serial_lock:
@@ -126,8 +131,6 @@ class Lights433Server(object):
                         jsonify(message='%s switched %s!' % (switch_id, op)),
                         200)
             except:
-                if sentry:
-                    sentry.captureException()
                 self.clean_up()
                 raise
 
@@ -135,15 +138,15 @@ class Lights433Server(object):
             switch_func = (lambda x, y:
                            lambda op: switch(op, x, y))(switch_id, conf)
             switch_func.__name__ = str(switch_id)
-
+            self.switches[switch_id] = switch_func
             self.app.route('/switch/%s/<op>' % switch_id)(
                 auth.require(users=conf['users'])(switch_func)
             )
 
-    def clean_up(self, *args):
+    def clean_up(self, *args, **kwargs):
         if self.resettable:
             import RPi.GPIO as GPIO
-            GPIO.cleanup(pin=_RESET_PORT)
+            GPIO.cleanup(channel=_RESET_PORT)
 
     def run(self):
         self.app.run(host=self.host, port=self.port)

@@ -5,10 +5,12 @@ from __future__ import unicode_literals
 
 import logging
 
+import clip
+
 from raven import Client
+from raven.contrib.flask import Sentry
 
 from .server import Lights433Server
-import clip
 
 app = clip.App()
 
@@ -41,26 +43,30 @@ for l in (__name__, 'sentry.errors'):
 @clip.flag('--resettable',
            help='Enables device resetting over pin 3 (assumed RPi)')
 def lights433(host, port, resettable, serial, baud, timeout, switches, sentry):
+
     if sentry:
         with open(sentry, 'r') as f:
-            url = f.read().strip()
-        if not url and sentry == DEFAULT_SENTRY_CONF:
+            sentry_url = f.read().strip()
+        if not sentry_url and sentry == DEFAULT_SENTRY_CONF:
             log.warn("No sentry URL specified in [%s]" % DEFAULT_SENTRY_CONF)
         else:
-            sentry_client = Client(url)
+            sentry_client = Client(sentry_url)
             log.info("Sentry client configured!")
 
-    log.info("Loading switch configurations from [%s]" % DEFAULT_SWITCH_CONF)
-
     try:
+        log.info("Loading switch configurations from [%s]"
+                 % DEFAULT_SWITCH_CONF)
+
         server = Lights433Server(host, port, serial, baud, timeout,
-                                 switches, resettable,
-                                 locals().get('sentry_client', None))
-        server.run()
+                                 switches, resettable)
     except:
         if sentry_client:
             sentry_client.captureException()
         raise
+
+    if sentry:
+        Sentry(dsn=sentry_url).init_app(server.app)
+    server.run()
 
 
 def main():
