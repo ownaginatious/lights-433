@@ -1,4 +1,4 @@
-from flask_ask import Ask, statement
+from flask_ask import Ask, statement, question
 from Levenshtein import jaro
 
 
@@ -48,12 +48,12 @@ class AlexaServer(object):
         if not resolved_location:
             text = "I don't know that location, could you please repeat " \
                    "your request?"
-            return statement(text).simple_card(_CARD_TITLE, text)
+            return question(text).simple_card(_CARD_TITLE, text)
         resolved_operation = self.match_operation(operation)
         if not resolved_operation:
             text = "I don't know that operation, could you please repeat " \
                    "your request?"
-            return statement(text).simple_card(_CARD_TITLE, text)
+            return question(text).simple_card(_CARD_TITLE, text)
 
         switch_id, switch_func = resolved_location
         try:
