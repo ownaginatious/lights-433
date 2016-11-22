@@ -6,13 +6,18 @@ _MATCH_THRESHOLD = 0.8
 _CARD_TITLE = "Home Lighting"
 
 
+class ActionParseError(Exception):
+    pass
+
+
 class AlexaServer(object):
 
     def __init__(self, lights_433_server):
         self.server = lights_433_server
         self.ask = Ask(self.server.app, '/switch_alexa')
         self.ask.intent('LightSwitch')(
-            lambda location, operation: self.perform_switch(location, operation)
+            lambda location, operation:
+                self.perform_switch(location, operation)
         )
         self.ask.intent('AMAZON.HelpIntent')(
             lambda: self.get_welcome_response()
@@ -35,30 +40,29 @@ class AlexaServer(object):
         matches.sort(key=lambda x: x[0], reverse=True)
         if _MATCH_THRESHOLD >= 0.8:
             return matches[0][1:]
+        raise ActionParseError("I didn't understand the location. "
+                               "Could you please repeat?")
 
     def match_operation(self, operation):
         if operation.lower() in ['on', 'up', 'in']:
             return 'on'
         elif operation.lower() in ['off', 'down', 'out']:
             return 'off'
+        raise ActionParseError("I didn't understand the operation. "
+                               "Could you please repeat?")
 
     def perform_switch(self, location, operation):
 
-        resolved_location = self.match_location(location)
-        if not resolved_location:
-            text = "I don't know that location, could you please repeat " \
-                   "your request?"
-            return question(text).simple_card(_CARD_TITLE, text)
-        resolved_operation = self.match_operation(operation)
-        if not resolved_operation:
-            text = "I don't know that operation, could you please repeat " \
-                   "your request?"
-            return question(text).simple_card(_CARD_TITLE, text)
+        try:
+            resolved_location = self.match_location(location or "")
+            resolved_operation = self.match_operation(operation or "")
+        except ActionParseError as ape:
+            return question(str(ape)).simple_card(_CARD_TITLE, str(ape))
 
         switch_id, switch_func = resolved_location
         try:
             r = switch_func(resolved_operation)
-            text = "%s lights %s!" % (switch_id.replace('_', ' '),
+            text = "%s lights %s!" % (switch_id.replace('_', ' ').title(),
                                       resolved_operation)
             status = int(r.status.split(' ')[0])
             if status < 200 or status > 299:
