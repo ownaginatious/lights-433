@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 from flask_ask import Ask, statement, question
 from Levenshtein import jaro
 
@@ -44,9 +49,9 @@ class AlexaServer(object):
                                "Could you please repeat?")
 
     def match_operation(self, operation):
-        if operation.lower() in ['on', 'up', 'in']:
+        if operation.lower() in ('on', 'up', 'in'):
             return 'on'
-        elif operation.lower() in ['off', 'down', 'out']:
+        elif operation.lower() in ('off', 'down', 'out'):
             return 'off'
         raise ActionParseError("I didn't understand the operation. "
                                "Could you please repeat?")
