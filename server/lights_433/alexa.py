@@ -36,15 +36,16 @@ class AlexaServer(object):
 
         location -- the location to match against
         """
-        matches = []
-        for switch_id, switch_func in self.server.switches.items():
-            similarity = jaro(location, switch_id)
-            if location[0].lower() == switch_id[0].lower():
-                similarity += 0.1
-            matches += [(similarity, switch_id, switch_func)]
-        matches.sort(key=lambda x: x[0], reverse=True)
-        if _MATCH_THRESHOLD >= 0.8:
-            return matches[0][1:]
+        if location:
+            matches = []
+            for switch_id, switch_func in self.server.switches.items():
+                similarity = jaro(location, switch_id)
+                if location[0].lower() == switch_id[0].lower():
+                    similarity += 0.1
+                matches += [(similarity, switch_id, switch_func)]
+            matches.sort(key=lambda x: x[0], reverse=True)
+            if _MATCH_THRESHOLD >= 0.8:
+                return matches[0][1:]
         raise ActionParseError("I didn't understand the location. "
                                "Could you please repeat?")
 
