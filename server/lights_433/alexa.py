@@ -44,7 +44,7 @@ class AlexaServer(object):
                     similarity += 0.1
                 matches += [(similarity, switch_id, switch_func)]
             matches.sort(key=lambda x: x[0], reverse=True)
-            if _MATCH_THRESHOLD >= 0.8:
+            if matches[0][0] >= _MATCH_THRESHOLD:
                 return matches[0][1:]
         raise ActionParseError("I didn't understand the location. "
                                "Could you please repeat?")
