@@ -68,8 +68,8 @@ class AlexaServer(object):
         switch_id, switch_func = resolved_location
         try:
             r = switch_func(resolved_operation)
-            text = "%s lights %s!" % (switch_id.replace('_', ' ').title(),
-                                      resolved_operation)
+            text = "%s %s!" % (
+                switch_id.replace('_', ' ').title(), resolved_operation)
             status = int(r.status.split(' ')[0])
             if status < 200 or status > 299:
                 raise Exception(status)
