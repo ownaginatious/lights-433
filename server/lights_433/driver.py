@@ -84,8 +84,8 @@ class SignalDriver(object):
         self.adapter.initialize()
 
         # Ensure the adapter is cleaned up properly on termination.
-        signal.signal(signal.SIGINT, self.adapter.close)
-        signal.signal(signal.SIGTERM, self.adapter.close)
+        signal.signal(signal.SIGINT, self._signal_close)
+        signal.signal(signal.SIGTERM, self._signal_close)
 
     def reconnect(self):
         """
@@ -93,6 +93,9 @@ class SignalDriver(object):
         connection.
         """
         self.adapter.reset()
+
+    def _signal_close(self, signum, frame):
+        self.adapter.close()
 
     def _assert_response(self, expected, actual=None):
         """
