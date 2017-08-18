@@ -44,7 +44,11 @@ Signal = namedtuple('Signal', ['protocol', 'pulse_length', 'message'])
 LOG = logging.getLogger(__name__)
 
 
-class BadResponseError(Exception):
+class DeviceCommError(Exception):
+    pass
+
+
+class BadResponseError(DeviceCommError):
     """
     Represents an either unintelligable or unexpected response from the
     serial device.
@@ -59,7 +63,7 @@ class BadResponseError(Exception):
         super(BadResponseError, self).__init__(message)
 
 
-class RadioTimeout(Exception):
+class RadioTimeout(DeviceCommError):
     """
     Raised in the event of a radio timeout when waiting for an incoming signal.
     """

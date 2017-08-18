@@ -21,10 +21,6 @@ DEFAULT_SWITCH_CONF = "/etc/lights-433/switches.conf"
 DEFAULT_SENTRY_CONF = "/etc/lights-433/sentry.conf"
 
 
-class BadArgumentsError(Exception):
-    pass
-
-
 log = logging.getLogger(__name__)
 
 # Attach loggers to the console.
@@ -49,16 +45,6 @@ for l in (__name__, 'sentry.errors'):
           help='Path to the config file containing the Sentry capture URL')
 def lights433(host, port, adapter, adapter_args, switches, sentry):
 
-    try:
-        adapter_kwargs = {
-            k: v
-            for pair in adapter_args.split(',') for k, v in pair.split('=')
-        }
-    except:
-        raise BadArgumentsError(adapter_args)
-
-    adapter = get_adapter(adapter)(**adapter_kwargs)
-
     sentry_client, sentry_url = None, None
     if sentry or os.path.exists(DEFAULT_SENTRY_CONF):
         sentry = sentry if sentry is not None else DEFAULT_SENTRY_CONF
@@ -73,6 +59,12 @@ def lights433(host, port, adapter, adapter_args, switches, sentry):
 
     try:
         log.info("Loading switch configurations from [%s]" % switches)
+
+        adapter_kwargs = dict(
+            pair.split('=') for pair in adapter_args.split(',')
+        )
+
+        adapter = get_adapter(adapter)(**adapter_kwargs)
         server = Lights433Server(host, port, adapter, switches)
     except:
         if sentry_client:

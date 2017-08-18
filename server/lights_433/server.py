@@ -11,12 +11,10 @@ from flask import Flask, jsonify, make_response
 from flask_basic_roles import BasicRoleAuth
 
 from .alexa import AlexaServer
-from .driver import SignalDriver
+from .driver import SignalDriver, DeviceCommError
 
 
 log = logging.getLogger(__name__)
-
-_RESET_PORT = 4
 
 
 class UnknownConfigSettingError(Exception):
@@ -39,12 +37,6 @@ class Lights433Server(object):
         self.host = host
         self.port = port
         self.switches = {}
-
-        try:
-            self._setup_outputs()
-        except:
-            self.clean_up()
-            raise
 
         self.driver = SignalDriver(adapter)
         users = {}
@@ -82,28 +74,24 @@ class Lights433Server(object):
 
     def _setup_switches(self, switches, auth):
         def switch(op, switch_id, conf):
-            try:
-                with self.driver_lock:
-                    op = op.lower()
-                    if op not in ('on', 'off'):
-                        return make_response(
-                            jsonify(error='no such switch \"%s\" or '
-                                          'method "%s"' % (switch_id, op)),
-                            404)
-                    f = partial(self.driver.send_signal,
-                                conf['%s_signal' % op],
-                                conf['pulse_length'], 5)
-                    try:
-                        f()
-                    except:
-                        self.driver.reconnect()  # Reboot the transmitter
-                        f()
+            with self.driver_lock:
+                op = op.lower()
+                if op not in ('on', 'off'):
                     return make_response(
-                        jsonify(message='%s switched %s!' % (switch_id, op)),
-                        200)
-            except:
-                self.clean_up()
-                raise
+                        jsonify(error='no such switch \"%s\" or '
+                                      'method "%s"' % (switch_id, op)),
+                        404)
+                f = partial(self.driver.send_signal,
+                            conf['%s_signal' % op],
+                            conf['pulse_length'], 5)
+                try:
+                    f()
+                except DeviceCommError:
+                    self.driver.reconnect()  # Reboot the transmitter
+                    f()
+                return make_response(
+                    jsonify(message='%s switched %s!' % (switch_id, op)),
+                    200)
 
         for switch_id, conf in switches.items():
             switch_func = (lambda x, y:
