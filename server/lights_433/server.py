@@ -5,9 +5,7 @@ from __future__ import unicode_literals
 
 from functools import partial
 import logging
-import signal
 from threading import Lock
-import time
 
 from flask import Flask, jsonify, make_response
 from flask_basic_roles import BasicRoleAuth
@@ -35,17 +33,12 @@ class SwitchAlreadyExistsError(Exception):
 
 class Lights433Server(object):
 
-    def __init__(self, host, port, serial, baud, timeout, switch_conf,
-                 resettable=False):
+    def __init__(self, host, port, adapter, switch_conf):
 
-        self.serial_lock = Lock()
+        self.driver_lock = Lock()
         self.host = host
         self.port = port
         self.switches = {}
-        self.resettable = resettable
-
-        signal.signal(signal.SIGINT, self.clean_up)
-        signal.signal(signal.SIGTERM, self.clean_up)
 
         try:
             self._setup_outputs()
@@ -53,9 +46,7 @@ class Lights433Server(object):
             self.clean_up()
             raise
 
-        self.driver = SignalDriver(serial,
-                                   baud_rate=baud, timeout=timeout,
-                                   port_setup=self._setup_outputs())
+        self.driver = SignalDriver(adapter)
         users = {}
         switches = {}
         with open(switch_conf, 'r') as f:
@@ -85,26 +76,6 @@ class Lights433Server(object):
         self._setup_switches(switches, auth)
         self.alexa = AlexaServer(self)
 
-    def _setup_outputs(self):
-
-        if not self.resettable:
-            return None
-
-        # It is assumed this is always a Raspberry Pi for now.
-        import RPi.GPIO as GPIO
-
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(_RESET_PORT, GPIO.OUT)
-        GPIO.output(_RESET_PORT, GPIO.HIGH)
-
-        def _reset_function():
-            GPIO.output(_RESET_PORT, GPIO.LOW)
-            time.sleep(1)  # Long delay to ensure device has reset.
-            GPIO.output(_RESET_PORT, GPIO.HIGH)
-            time.sleep(2)  # Device reboot waiting period.
-
-        return _reset_function
-
     def _setup_users(self, users, auth):
         for user_id, password in users.items():
             auth.add_user(user=user_id, password=password)
@@ -112,7 +83,7 @@ class Lights433Server(object):
     def _setup_switches(self, switches, auth):
         def switch(op, switch_id, conf):
             try:
-                with self.serial_lock:
+                with self.driver_lock:
                     op = op.lower()
                     if op not in ('on', 'off'):
                         return make_response(
@@ -142,11 +113,6 @@ class Lights433Server(object):
             self.app.route('/switch/%s/<op>' % switch_id)(
                 auth.require(users=conf['users'])(switch_func)
             )
-
-    def clean_up(self, *args, **kwargs):
-        if self.resettable:
-            import RPi.GPIO as GPIO
-            GPIO.cleanup(channel=_RESET_PORT)
 
     def run(self):
         self.app.run(host=self.host, port=self.port)

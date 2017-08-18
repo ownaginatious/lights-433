@@ -85,7 +85,7 @@ echo " >> Generating systemd unit file..."
 
     echo "[Service]"
     echo "WorkingDirectory=${install_dir}"
-    echo "ExecStart=${install_dir}/venv/bin/lights433 /dev/ttyAMA0 --host 0.0.0.0 --port 5000 --resettable"
+    echo "ExecStart=${install_dir}/venv/bin/lights433 rpi --adapter-args reset_pin=4 --host 0.0.0.0 --port 5000"
     echo "Type=simple"
     echo "Restart=always"
     echo "RestartSec=10"

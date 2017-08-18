@@ -6,13 +6,11 @@ from __future__ import unicode_literals
 import codecs
 from collections import namedtuple
 import logging
-import serial
+import signal
 import struct
 
 _PROTOCOL_HEADER = b'CLS'
 _PROTOCOL_VERSION = b'0'
-_DEFAULT_BAUD = 9600
-_DEFAULT_TIMEOUT = 10
 
 # Instructions
 _READ_433 = b'1'
@@ -70,49 +68,27 @@ class RadioTimeout(Exception):
 
 class SignalDriver(object):
 
-    def __init__(self, serial_device_file, baud_rate=_DEFAULT_BAUD,
-                 timeout=_DEFAULT_TIMEOUT, port_setup=None):
+    def __init__(self, adapter):
         """
-        Connects to a serial interface and initializes a new signal
+        Connects to an external device via an adapter and creates a new signal
         driver instance.
 
-        :param serial_device_file: the time to resolve
-        :type serial_device_file: str or unicode
-        :param baud_rate: the baud rate of the interface
-        :type baud_rate: int
-        :param timeout: timeout of the interface in seconds
-        :type timeout: int
-        :param port_setup: a function to do any necessary work in restarting
-                           the interface or device (default None)
-        :type port_setup: function
-
-        :returns: tuple of days and datetime.time
+        :param adapter: the `Adapter` instance to connect through.
+        :type adapter: `Adapter`
         """
-        self.serial_device_file = serial_device_file
-        self.baud_rate = baud_rate
-        self.timeout = timeout
-        self.conn = None
-        self.port_setup = port_setup
-        if self.port_setup and not hasattr(self.port_setup, '__call__'):
-            raise Exception('Supplied argument for port_setup '
-                            'is not a function')
-        self.reconnect()
+        self.adapter = adapter
+        self.adapter.initialize()
+
+        # Ensure the adapter is cleaned up properly on termination.
+        signal.signal(signal.SIGINT, self.adapter.close)
+        signal.signal(signal.SIGTERM, self.adapter.close)
 
     def reconnect(self):
         """
-        Reconnects to the serial interface and resets the device (optional)
+        Resets the underlying adapter to reset the external device and
+        connection.
         """
-        if self.port_setup:
-            self.port_setup()
-        if self.conn:
-            try:
-                self.conn.close()
-            except Exception as e:
-                LOG.warn("Exception when terminating connection: %s", str(e))
-        self.conn = serial.Serial(self.serial_device_file,
-                                  self.baud_rate,
-                                  timeout=self.timeout)
-        self.conn.flush()
+        self.adapter.reset()
 
     def _assert_response(self, expected, actual=None):
         """
@@ -127,7 +103,7 @@ class SignalDriver(object):
         :returns: none; raises error on assertion failure
         """
         if not actual:
-            actual = self.conn.read()
+            actual = self.adapter.read()
         if actual != expected:
             raise BadResponseError(actual, expected)
 
@@ -138,7 +114,7 @@ class SignalDriver(object):
 
         :returns: int
         """
-        return struct.unpack('<H', self.conn.read(2))
+        return struct.unpack('<H', self.adapter.read(2))
 
     def _write_as_2bytes(self, x):
         """
@@ -150,16 +126,16 @@ class SignalDriver(object):
         """
         if isinstance(x, str):
             x = ord(x)
-        self.conn.write(struct.pack("<H", x))
+        self.adapter.write(struct.pack("<H", x))
 
     def _perform_handshake(self):
         """
         Performs the handshake with the serial device to initializes
         accepting incoming commands.
         """
-        self.conn.write(_PROTOCOL_HEADER)
-        self.conn.write(_PROTOCOL_VERSION)
-        self.conn.flush()
+        self.adapter.write(_PROTOCOL_HEADER)
+        self.adapter.write(_PROTOCOL_VERSION)
+        self.adapter.flush()
         self._assert_response(_HELLO)
 
     def send_signal(self, message, pulse_length, repetitions=1, protocol=1):
@@ -177,8 +153,8 @@ class SignalDriver(object):
         :type protocol: int
         """
         self._perform_handshake()
-        self.conn.write(_WRITE_433)
-        self.conn.flush()
+        self.adapter.write(_WRITE_433)
+        self.adapter.flush()
         self._assert_response(_AWAITING_DATA)
 
         # Send the message definition payload.
@@ -188,7 +164,7 @@ class SignalDriver(object):
         if isinstance(message, unicode):
             message = codecs.decode(message, 'hex')
         self._write_as_2bytes(len(message))
-        self.conn.write(message)
+        self.adapter.write(message)
         self._assert_response(_GOODBYE)
 
     def read_signals(self, message_num, radio_timeout=10000):
@@ -204,8 +180,8 @@ class SignalDriver(object):
         :returns: generator of Signal
         """
         self._perform_handshake()
-        self.conn.write(_READ_433)
-        self.conn.flush()
+        self.adapter.write(_READ_433)
+        self.adapter.flush()
         self._assert_response(_AWAITING_DATA)
 
         # Send desired spec.
@@ -215,7 +191,7 @@ class SignalDriver(object):
         # Begin reading message data.
         for _ in range(message_num):
             while True:
-                resp = self.conn.read()
+                resp = self.adapter.read()
                 if resp == _HEARTBEAT:
                     continue
                 if resp == _RADIO_TIMEOUT:
@@ -225,6 +201,6 @@ class SignalDriver(object):
             protocol = self._read_2byte_int()[0]
             delay = self._read_2byte_int()[0]
             size = self._read_2byte_int()[0]
-            message = self.conn.read(size)
+            message = self.adapter.read(size)
             yield Signal(protocol, delay, codecs.encode(message, 'hex'))
         self._assert_response(_GOODBYE)
