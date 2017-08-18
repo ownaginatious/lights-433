@@ -41,6 +41,7 @@ class RPiAdapter(Adapter):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self._reset_pin, GPIO.OUT)
         GPIO.output(self._reset_pin, GPIO.HIGH)
+        self._gpio_ready = True
 
     def initialize(self):
 
