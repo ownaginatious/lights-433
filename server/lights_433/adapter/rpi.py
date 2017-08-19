@@ -34,7 +34,7 @@ class RPiAdapter(Adapter):
     def _reset_serial_connection(self):
         self._serial_connection = serial.Serial(
             SERIAL_HANDLE_FILE, 9600, timeout=1)
-        self._serial_connection.flush()
+        self._serial_connection.reset_input_buffer()
 
     def _set_gpio(self):
         # Setup the reset pin.
@@ -64,7 +64,7 @@ class RPiAdapter(Adapter):
         GPIO.output(self._reset_pin, GPIO.HIGH)
         time.sleep(2)  # Device reboot waiting period.
 
-        self._serial_connection.flush()
+        self._serial_connection.reset_input_buffer()
 
     def close(self):
         GPIO.cleanup(channel=self._reset_pin)
